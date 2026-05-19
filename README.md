@@ -21,68 +21,26 @@ WebRTC media is peer-to-peer. The backend only relays signaling messages:
 - `create-room`, `join-room`, `leave-room`
 - `offer`, `answer`, `ice-candidate`
 
-## Deploy (One-click) — Render
+## How it works
 
-This repo includes a Render Blueprint: [render.yaml](render.yaml)
+1. **Room setup**
+  - One user creates a `roomId`.
+  - The second user joins using the same `roomId`.
 
-1. Push this repo to GitHub.
-2. Click the button below (replace the URL with your repo URL):
+2. **Signaling (Socket.IO)**
+  - When the second user joins, the clients exchange:
+    - WebRTC SDP **offer** / **answer**
+    - ICE **candidates**
+  - The server does not handle media; it only forwards signaling events to the other peer in the room.
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/YOUR_ORG/YOUR_REPO)
+3. **Media (WebRTC P2P)**
+  - Each client captures local camera/mic with `getUserMedia()`.
+  - A `RTCPeerConnection` is created and local tracks are added.
+  - When negotiation completes, audio/video flows directly between the two browsers.
 
-Render will create one service:
-- `avc-web` (Node web service that serves the frontend build)
+4. **In-call controls**
+  - “Mute” toggles the local audio track enabled state.
+  - “Camera off” toggles the local video track enabled state.
 
-### Manual setup (Render UI)
-
-If you prefer to create it manually in the Render dashboard, create a **Web Service** connected to your repo and fill:
-
-- **Root Directory**: *(leave empty / repo root)*
-- **Runtime**: Node
-- **Build Command**:
-  `cd backendTs && npm ci --include=dev && npm run build && cd .. && cd frontend && npm ci --include=dev && npm run build`
-- **Start Command**:
-  `node backendTs/dist/index.js`
-- **Health Check Path**:
-  `/healthz`
-
-Environment variables:
-- `NODE_ENV=production`
-- `NPM_CONFIG_PRODUCTION=false`
-
-Notes:
-- The backend serves `frontend/dist`, so the frontend uses same-origin sockets in production by default.
-
-## Run locally
-
-### Backend
-
-```bash
-cd backendTs
-npm install
-npm run build
-npm start
-```
-
-Backend listens on `http://localhost:5050` by default.
-
-### Frontend
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-The frontend defaults to `VITE_SOCKET_URL=http://localhost:5050` if not provided.
-
-## Roadmap (ML / Adaptive compression)
-
-Ideas to build next (not fully implemented yet):
-- CNN-based ROI/importance estimation per frame
-- Adaptive bitrate/quality per region (foreground vs background)
-- Bandwidth-aware control loop using WebRTC stats
-
-## License
-
-No license file yet. If you plan to open-source publicly, add a license (MIT/Apache-2.0/etc.).
+5. **Refresh recovery (basic)**
+  - The frontend stores the last active `roomId` in session storage and attempts to re-join after a refresh.
