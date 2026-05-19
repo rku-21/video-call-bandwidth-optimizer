@@ -40,7 +40,7 @@ If you prefer to create it manually in the Render dashboard, create a **Web Serv
 - **Root Directory**: *(leave empty / repo root)*
 - **Runtime**: Node
 - **Build Command**:
-  `npm ci --include=dev --prefix backendTs && npm run build --prefix backendTs && npm ci --include=dev --prefix frontend && npm run build --prefix frontend`
+  `NPM_CONFIG_PRODUCTION=false npm ci --prefix backendTs && npm run build --prefix backendTs && NPM_CONFIG_PRODUCTION=false npm ci --prefix frontend && npm run build --prefix frontend`
 - **Start Command**:
   `node backendTs/dist/index.js`
 - **Health Check Path**:
@@ -48,6 +48,7 @@ If you prefer to create it manually in the Render dashboard, create a **Web Serv
 
 Environment variables:
 - `NODE_ENV=production`
+- `NPM_CONFIG_PRODUCTION=false`
 
 Notes:
 - The backend serves `frontend/dist`, so the frontend uses same-origin sockets in production by default.
