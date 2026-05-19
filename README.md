@@ -30,15 +30,27 @@ This repo includes a Render Blueprint: [render.yaml](render.yaml)
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/YOUR_ORG/YOUR_REPO)
 
-Render will create two services:
-- `avc-backendts` (Node web service)
-- `avc-frontend` (static site)
+Render will create one service:
+- `avc-web` (Node web service that serves the frontend build)
 
-### Notes
+### Manual setup (Render UI)
 
-- The frontend expects `VITE_SOCKET_URL` at build time.
-  - The Blueprint sets `VITE_SOCKET_URL` by referencing the backend’s `RENDER_EXTERNAL_URL`.
-- If you rename services in `render.yaml`, update the `fromService.name` accordingly.
+If you prefer to create it manually in the Render dashboard, create a **Web Service** connected to your repo and fill:
+
+- **Root Directory**: *(leave empty / repo root)*
+- **Runtime**: Node
+- **Build Command**:
+  `npm ci --include=dev --prefix backendTs && npm run build --prefix backendTs && npm ci --include=dev --prefix frontend && npm run build --prefix frontend`
+- **Start Command**:
+  `node backendTs/dist/index.js`
+- **Health Check Path**:
+  `/healthz`
+
+Environment variables:
+- `NODE_ENV=production`
+
+Notes:
+- The backend serves `frontend/dist`, so the frontend uses same-origin sockets in production by default.
 
 ## Run locally
 

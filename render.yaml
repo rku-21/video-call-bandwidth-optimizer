@@ -1,33 +1,13 @@
 services:
   - type: web
-    name: avc-backendts
+    name: avc-web
     runtime: node
-    plan: free
-    region: oregon
-    rootDir: backendTs
-    buildCommand: npm ci && npm run build
-    startCommand: npm start
-    healthCheckPath: /
+    # Deploy everything as a single web service (backend serves frontend/dist)
+    buildCommand: >
+      npm ci --include=dev --prefix backendTs && npm run build --prefix backendTs &&
+      npm ci --include=dev --prefix frontend && npm run build --prefix frontend
+    startCommand: node backendTs/dist/index.js
+    healthCheckPath: /healthz
     envVars:
       - key: NODE_ENV
         value: production
-
-  - type: web
-    name: avc-frontend
-    runtime: static
-    plan: free
-    rootDir: frontend
-    buildCommand: npm ci && npm run build
-    staticPublishPath: dist
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
-    envVars:
-      # Vite reads this at build time. We reference the backend service's public URL.
-      # Render provides RENDER_EXTERNAL_URL on web services.
-      - key: VITE_SOCKET_URL
-        fromService:
-          name: avc-backendts
-          type: web
-          envVarKey: RENDER_EXTERNAL_URL
