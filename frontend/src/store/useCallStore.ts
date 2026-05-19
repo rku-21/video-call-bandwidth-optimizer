@@ -3,10 +3,17 @@ import { createRoomId } from "../math";
 
 export type SocketIntent= {type:"create-room"; roomId:string} | {type:"join-room"; roomId:string} | {type:"leave-room"; roomId:string};
 
-
-
 type CallDeps = {
-  ensureLocalMedia: () => Promise<unknown>;
+  ensureLocalMedia: () => Promise<MediaStream>;
+  attachLocalStream: () => void;
+  attachRemoteStream: () => void;
+  startCallOffer: (roomId: string) => Promise<void>;
+  handleOffer: (roomId: string, offer: RTCSessionDescriptionInit) => Promise<void>;
+  handleAnswer: (answer: RTCSessionDescriptionInit) => Promise<void>;
+  handleIceCandidate: (candidate: RTCIceCandidateInit) => Promise<void>;
+  setAudioEnabled: (enabled: boolean) => void;
+  setVideoEnabled: (enabled: boolean) => void;
+  resetPeerConnection: () => void;
   stopPeer: () => void;
   clearRemoteVideo: () => void;
   randomRoomId: () => string;
@@ -22,6 +29,10 @@ export type CallStore = {
   isRoomCreator: boolean;
   isCreatingRoom: boolean;
 
+  remoteConnected: boolean;
+  audioEnabled: boolean;
+  videoEnabled: boolean;
+
   socketIntent: SocketIntent | null;
 
   init: (deps: CallDeps) => void;
@@ -31,6 +42,10 @@ export type CallStore = {
   createRoom: () => Promise<void>;
   joinRoom: () => Promise<void>;
   leaveRoom: () => void;
+
+  setRemoteConnected: (connected: boolean) => void;
+  toggleAudio: () => Promise<void>;
+  toggleVideo: () => Promise<void>;
 };
 
 export const useCallStore = create<CallStore>((set, get) => ({
@@ -42,6 +57,10 @@ export const useCallStore = create<CallStore>((set, get) => ({
   callActive: false,
   isRoomCreator: false,
   isCreatingRoom: false,
+
+  remoteConnected: false,
+  audioEnabled: true,
+  videoEnabled: true,
 
   socketIntent: null,
 
@@ -77,6 +96,7 @@ export const useCallStore = create<CallStore>((set, get) => ({
 
     try {
       await deps.ensureLocalMedia();
+      set({ remoteConnected: false, audioEnabled: true, videoEnabled: true });
       set({ socketIntent: { type: "create-room", roomId:newRoomId}});
       set({ callActive: true });
     } catch (e) {
@@ -111,6 +131,7 @@ export const useCallStore = create<CallStore>((set, get) => ({
 
     try {
       await deps.ensureLocalMedia();
+      set({ remoteConnected: false, audioEnabled: true, videoEnabled: true });
       set({ socketIntent: { type: "join-room", roomId: rid } });
       set({ callActive: true });
     } catch (e) {
@@ -136,6 +157,32 @@ export const useCallStore = create<CallStore>((set, get) => ({
       isRoomCreator: false,
       callActive: false,
       error: "",
+      remoteConnected: false,
+      audioEnabled:false,
+      videoEnabled:false,
     });
+  },
+
+  setRemoteConnected: (connected) => {
+    if (get().remoteConnected === connected) return;
+    set({ remoteConnected: connected });
+  },
+
+  toggleAudio: async () => {
+    const deps = get().deps;
+    if (!deps) return;
+    await deps.ensureLocalMedia();
+    const next = !get().audioEnabled;
+    deps.setAudioEnabled(next);
+    set({ audioEnabled: next });
+  },
+
+  toggleVideo: async () => {
+    const deps = get().deps;
+    if (!deps) return;
+    await deps.ensureLocalMedia();
+    const next = !get().videoEnabled;
+    deps.setVideoEnabled(next);
+    set({ videoEnabled: next });
   },
 }));

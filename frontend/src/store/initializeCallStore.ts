@@ -10,6 +10,11 @@ export function useCallBindings() {
     const joinRoom = useCallStore((s) => s.joinRoom);
     const leaveRoom = useCallStore((s) => s.leaveRoom);
     const intent =useCallStore((s)=> s.socketIntent);
+    const remoteConnected = useCallStore((s) => s.remoteConnected);
+    const audioEnabled = useCallStore((s) => s.audioEnabled);
+    const videoEnabled = useCallStore((s) => s.videoEnabled);
+    const toggleAudio = useCallStore((s) => s.toggleAudio);
+    const toggleVideo = useCallStore((s) => s.toggleVideo);
     return {
         initCallStore,
         roomId,
@@ -20,5 +25,10 @@ export function useCallBindings() {
         joinRoom,
         leaveRoom,
         intent,
+        remoteConnected,
+        audioEnabled,
+        videoEnabled,
+        toggleAudio,
+        toggleVideo,
     };
 }

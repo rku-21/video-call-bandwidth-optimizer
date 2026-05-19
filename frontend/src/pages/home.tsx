@@ -10,6 +10,11 @@ type HomeProps = {
   leaveRoom: () => void;
   localVideoRef: RefObject<HTMLVideoElement | null>;
   remoteVideoRef: RefObject<HTMLVideoElement | null>;
+  remoteConnected: boolean;
+  audioEnabled: boolean;
+  videoEnabled: boolean;
+  toggleAudio: () => void | Promise<void>;
+  toggleVideo: () => void | Promise<void>;
 };
 
 export const Home=({
@@ -22,6 +27,11 @@ export const Home=({
   leaveRoom,
   localVideoRef,
   remoteVideoRef,
+  remoteConnected,
+  audioEnabled,
+  videoEnabled,
+  toggleAudio,
+  toggleVideo,
 }: HomeProps)=> {
 
   return (
@@ -142,6 +152,25 @@ export const Home=({
                     <span className="w-2 h-2 bg-green-500 rounded-full" />
                     You (local)
                   </div>
+
+                  <div className="absolute top-4 right-4 flex gap-2">
+                    <button
+                      type="button"
+                      onClick={toggleAudio}
+                      className="bg-black/70 hover:bg-black/80 text-white px-3 py-2 rounded-lg text-xs font-semibold"
+                      title={audioEnabled ? "Mute" : "Unmute"}
+                    >
+                      {audioEnabled ? "Mute" : "Unmute"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={toggleVideo}
+                      className="bg-black/70 hover:bg-black/80 text-white px-3 py-2 rounded-lg text-xs font-semibold"
+                      title={videoEnabled ? "Camera off" : "Camera on"}
+                    >
+                      {videoEnabled ? "Camera off" : "Camera on"}
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -161,30 +190,31 @@ export const Home=({
               </div>
             </div>
 
-            {/* Share Room ID Section */}
-            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700 p-6">
-              <p className="text-xs font-bold text-slate-600 dark:text-slate-400 mb-4 uppercase tracking-widest">
-                Share this room ID
-              </p>
-              <div className="flex gap-3">
-                <input
-                  type="text"
-                  value={roomId}
-                  readOnly
-                  className="flex-1 px-4 py-3 border-2 border-slate-200 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 text-slate-900 dark:text-white font-mono font-medium focus:outline-none"
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    navigator.clipboard.writeText(roomId);
-                  }}
-                  className="px-4 py-3 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-900 dark:text-white rounded-lg transition-colors duration-200 font-semibold text-lg"
-                  title="Copy room ID"
-                >
-                  📋
-                </button>
+            
+              <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700 p-6">
+                <p className="text-xs font-bold text-slate-600 dark:text-slate-400 mb-4 uppercase tracking-widest">
+                  Share this room ID
+                </p>
+                <div className="flex gap-3">
+                  <input
+                    type="text"
+                    value={roomId}
+                    readOnly
+                    className="flex-1 px-4 py-3 border-2 border-slate-200 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 text-slate-900 dark:text-white font-mono font-medium focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(roomId);
+                    }}
+                    className="px-4 py-3 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-900 dark:text-white rounded-lg transition-colors duration-200 font-semibold text-lg"
+                    title="Copy room ID"
+                  >
+                    📋
+                  </button>
+                </div>
               </div>
-            </div>
+           
           </>
         )}
       </div>

@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Builds
+dist/
+**/dist/
+
+# Env
+.env
+.env.*
+
+# Python artifacts (kept local)
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+
+# Local virtualenv
+.venv/
+
+# Local-only python backend folder (do not publish in this repo)
+backend/

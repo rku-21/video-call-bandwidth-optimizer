@@ -26,11 +26,65 @@ export function useSocket(): void {
       if (currentRoomId === roomId) useCallStore.setState({ currentRoomId: "" });
     };
 
+    const onUserJoined = async () => {
+      const { deps, currentRoomId } = useCallStore.getState();
+      if (!deps || !currentRoomId) return;
+      try {
+        useCallStore.setState({remoteConnected:true});
+        deps.resetPeerConnection();
+        await deps.startCallOffer(currentRoomId);
+      } catch (e) {
+        // Keep UI alive; surface error in store.
+        useCallStore.setState({ error: (e as Error)?.message || String(e) });
+      }
+    };
+
+    const onUserDisconnected = () => {
+      const { deps } = useCallStore.getState();
+      if (!deps) return;
+      deps.resetPeerConnection();
+      deps.clearRemoteVideo();
+      useCallStore.getState().setRemoteConnected(false);
+    };
+
+    const onOffer = async ({ offer }: { offer: RTCSessionDescriptionInit; senderSocketId: string }) => {
+      const { deps, currentRoomId } = useCallStore.getState();
+      if (!deps || !currentRoomId) return;
+      try {
+        useCallStore.setState({remoteConnected:true});
+        await deps.handleOffer(currentRoomId, offer);
+      } catch (e) {
+        useCallStore.setState({ error: (e as Error)?.message || String(e) });
+      }
+    };
+
+    const onAnswer = async ({ answer }: { answer: RTCSessionDescriptionInit; senderSocketId: string }) => {
+      const { deps } = useCallStore.getState();
+      if (!deps) return;
+      try {
+        useCallStore.setState({remoteConnected:true});
+        await deps.handleAnswer(answer);
+      } catch (e) {
+        useCallStore.setState({ error: (e as Error)?.message || String(e) });
+      }
+    };
+
+    const onIceCandidate = async ({ candidate }: { candidate: RTCIceCandidateInit; senderSocketId: string }) => {
+      const { deps } = useCallStore.getState();
+      if (!deps) return;
+      await deps.handleIceCandidate(candidate);
+    };
+
     socket.on("connect", onConnect);
     socket.on("disconnect", onDisconnect);
     socket.on("room-created", onRoomCreated);
     socket.on("room-joined", onRoomJoined);
     socket.on("room-left", onRoomLeft);
+    socket.on("user-joined", onUserJoined);
+    socket.on("user-disconnected", onUserDisconnected);
+    socket.on("offer", onOffer);
+    socket.on("answer", onAnswer);
+    socket.on("ice-candidate", onIceCandidate);
 
     return () => {
       socket.off("connect", onConnect);
@@ -38,6 +92,11 @@ export function useSocket(): void {
       socket.off("room-created", onRoomCreated);
       socket.off("room-joined", onRoomJoined);
       socket.off("room-left", onRoomLeft);
+      socket.off("user-joined", onUserJoined);
+      socket.off("user-disconnected", onUserDisconnected);
+      socket.off("offer", onOffer);
+      socket.off("answer", onAnswer);
+      socket.off("ice-candidate", onIceCandidate);
     };
   }, []);
   
