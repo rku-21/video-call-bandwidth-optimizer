@@ -16,7 +16,8 @@ const frontendDistPath = path.resolve(process.cwd(), "frontend", "dist");
 app.use(express.static(frontendDistPath));
 
 // SPA fallback (avoid interfering with Socket.IO endpoints)
-app.get("*", (req: Request, res: Response, next: NextFunction) => {
+// NOTE: Express v5 does not accept `"*"` as a route path, so we use middleware.
+app.use((req: Request, res: Response, next: NextFunction) => {
     if (req.path.startsWith("/socket.io")) return next();
     if (req.method !== "GET") return next();
 
