@@ -40,7 +40,7 @@ If you prefer to create it manually in the Render dashboard, create a **Web Serv
 - **Root Directory**: *(leave empty / repo root)*
 - **Runtime**: Node
 - **Build Command**:
-  `NPM_CONFIG_PRODUCTION=false npm ci --prefix backendTs && npm run build --prefix backendTs && NPM_CONFIG_PRODUCTION=false npm ci --prefix frontend && npm run build --prefix frontend`
+  `cd backendTs && npm ci --include=dev && npm run build && cd .. && cd frontend && npm ci --include=dev && npm run build`
 - **Start Command**:
   `node backendTs/dist/index.js`
 - **Health Check Path**:

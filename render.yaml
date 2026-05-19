@@ -4,8 +4,8 @@ services:
     runtime: node
     # Deploy everything as a single web service (backend serves frontend/dist)
     buildCommand: >
-      NPM_CONFIG_PRODUCTION=false npm ci --prefix backendTs && npm run build --prefix backendTs &&
-      NPM_CONFIG_PRODUCTION=false npm ci --prefix frontend && npm run build --prefix frontend
+      cd backendTs && npm ci --include=dev && npm run build && cd .. &&
+      cd frontend && npm ci --include=dev && npm run build
     startCommand: node backendTs/dist/index.js
     healthCheckPath: /healthz
     envVars:
