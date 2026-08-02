@@ -4,6 +4,8 @@ import { useSocket } from "./useSocket";
 import { useCallReconnection } from "./reconnection/useCallReconnection";
 import { useCallBindings } from "./store/initializeCallStore";
 import { useVideoElements } from "./store/initializeVideoElement";
+import { useAdaptiveCalling } from "./adaptive/useAdaptiveCalling";
+import { isMlServiceConfigured } from "./adaptive/mlClient";
 
 export default function App() {
   useSocket();
@@ -24,6 +26,10 @@ export default function App() {
     videoEnabled,
     toggleAudio,
     toggleVideo,
+    adaptiveMode,
+    setAdaptiveMode,
+    adaptiveSnapshot,
+    setAdaptiveSnapshot,
   } =
     useCallBindings();
 
@@ -43,14 +49,27 @@ export default function App() {
     stopPeer,
     clearRemoteVideo,
     randomRoomId,
+    getPeerConnection,
   } =
     useVideoElements();
+
+  const envAdaptiveEnabled = String(import.meta.env.VITE_ADAPTIVE_CALLING ?? "1").trim() !== "0";
+  const adaptiveEnabled = callActive && envAdaptiveEnabled && adaptiveMode !== "off";
+  const mlConfigured = isMlServiceConfigured();
+
+  useAdaptiveCalling(
+    adaptiveEnabled,
+    adaptiveMode === "off" ? "auto" : adaptiveMode,
+    getPeerConnection,
+    setAdaptiveSnapshot
+  );
 
   useEffect(() => {
     initCallStore({
       ensureLocalMedia,
       attachLocalStream,
       attachRemoteStream,
+      getPeerConnection,
       startCallOffer,
       handleOffer,
       handleAnswer,
@@ -67,6 +86,7 @@ export default function App() {
     ensureLocalMedia,
     attachLocalStream,
     attachRemoteStream,
+    getPeerConnection,
     startCallOffer,
     handleOffer,
     handleAnswer,
@@ -103,6 +123,10 @@ export default function App() {
         videoEnabled={videoEnabled}
         toggleAudio={toggleAudio}
         toggleVideo={toggleVideo}
+        adaptiveMode={adaptiveMode}
+        setAdaptiveMode={setAdaptiveMode}
+        mlConfigured={mlConfigured}
+        adaptiveSnapshot={adaptiveSnapshot}
       />
     </>
   )

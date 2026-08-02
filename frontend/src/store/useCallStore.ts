@@ -1,12 +1,16 @@
 import { create } from "zustand";
 import { createRoomId } from "../math";
+import type { AdaptiveSnapshot } from "../adaptive/types";
 
 export type SocketIntent= {type:"create-room"; roomId:string} | {type:"join-room"; roomId:string} | {type:"leave-room"; roomId:string};
+
+export type AdaptiveMode = "off" | "auto" | "heuristic" | "ml";
 
 type CallDeps = {
   ensureLocalMedia: () => Promise<MediaStream>;
   attachLocalStream: () => void;
   attachRemoteStream: () => void;
+  getPeerConnection: () => RTCPeerConnection | null;
   startCallOffer: (roomId: string) => Promise<void>;
   handleOffer: (roomId: string, offer: RTCSessionDescriptionInit) => Promise<void>;
   handleAnswer: (answer: RTCSessionDescriptionInit) => Promise<void>;
@@ -33,6 +37,9 @@ export type CallStore = {
   audioEnabled: boolean;
   videoEnabled: boolean;
 
+  adaptiveMode: AdaptiveMode;
+  adaptiveSnapshot: AdaptiveSnapshot | null;
+
   socketIntent: SocketIntent | null;
 
   init: (deps: CallDeps) => void;
@@ -46,6 +53,9 @@ export type CallStore = {
   setRemoteConnected: (connected: boolean) => void;
   toggleAudio: () => Promise<void>;
   toggleVideo: () => Promise<void>;
+
+  setAdaptiveMode: (mode: AdaptiveMode) => void;
+  setAdaptiveSnapshot: (snapshot: AdaptiveSnapshot | null) => void;
 };
 
 export const useCallStore = create<CallStore>((set, get) => ({
@@ -61,6 +71,9 @@ export const useCallStore = create<CallStore>((set, get) => ({
   remoteConnected: false,
   audioEnabled: true,
   videoEnabled: true,
+
+  adaptiveMode: "auto",
+  adaptiveSnapshot: null,
 
   socketIntent: null,
 
@@ -160,6 +173,7 @@ export const useCallStore = create<CallStore>((set, get) => ({
       remoteConnected: false,
       audioEnabled:false,
       videoEnabled:false,
+      adaptiveSnapshot: null,
     });
   },
 
@@ -184,5 +198,13 @@ export const useCallStore = create<CallStore>((set, get) => ({
     const next = !get().videoEnabled;
     deps.setVideoEnabled(next);
     set({ videoEnabled: next });
+  },
+
+  setAdaptiveMode: (mode) => {
+    set({ adaptiveMode: mode });
+  },
+
+  setAdaptiveSnapshot: (snapshot) => {
+    set({ adaptiveSnapshot: snapshot });
   },
 }));

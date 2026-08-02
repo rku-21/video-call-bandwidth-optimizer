@@ -15,6 +15,10 @@ export function useCallBindings() {
     const videoEnabled = useCallStore((s) => s.videoEnabled);
     const toggleAudio = useCallStore((s) => s.toggleAudio);
     const toggleVideo = useCallStore((s) => s.toggleVideo);
+    const adaptiveMode = useCallStore((s) => s.adaptiveMode);
+    const setAdaptiveMode = useCallStore((s) => s.setAdaptiveMode);
+    const adaptiveSnapshot = useCallStore((s) => s.adaptiveSnapshot);
+    const setAdaptiveSnapshot = useCallStore((s) => s.setAdaptiveSnapshot);
     return {
         initCallStore,
         roomId,
@@ -30,5 +34,9 @@ export function useCallBindings() {
         videoEnabled,
         toggleAudio,
         toggleVideo,
+        adaptiveMode,
+        setAdaptiveMode,
+        adaptiveSnapshot,
+        setAdaptiveSnapshot,
     };
 }

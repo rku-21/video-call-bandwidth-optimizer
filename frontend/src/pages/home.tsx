@@ -1,4 +1,5 @@
 import type { RefObject } from "react";
+import type { AdaptiveSnapshot } from "../adaptive/types";
 
 type HomeProps = {
   roomId: string;
@@ -15,6 +16,11 @@ type HomeProps = {
   videoEnabled: boolean;
   toggleAudio: () => void | Promise<void>;
   toggleVideo: () => void | Promise<void>;
+
+  adaptiveMode: "off" | "auto" | "heuristic" | "ml";
+  setAdaptiveMode: (mode: "off" | "auto" | "heuristic" | "ml") => void;
+  mlConfigured: boolean;
+  adaptiveSnapshot: AdaptiveSnapshot | null;
 };
 
 export const Home=({
@@ -32,7 +38,22 @@ export const Home=({
   videoEnabled,
   toggleAudio,
   toggleVideo,
+  adaptiveMode,
+  setAdaptiveMode,
+  mlConfigured,
+  adaptiveSnapshot,
 }: HomeProps)=> {
+  const fmtBps = (bps?: number | null): string => {
+    if (!bps || !Number.isFinite(bps)) return "-";
+    if (bps >= 1_000_000) return `${(bps / 1_000_000).toFixed(2)} Mbps`;
+    if (bps >= 1_000) return `${Math.round(bps / 1_000)} kbps`;
+    return `${Math.round(bps)} bps`;
+  };
+
+  const fmtNum = (n?: number | null, digits = 0): string => {
+    if (n === null || n === undefined || !Number.isFinite(n)) return "-";
+    return n.toFixed(digits);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 py-8 px-4">
@@ -125,6 +146,33 @@ export const Home=({
                   <span className="w-2 h-2 bg-green-600 dark:bg-green-400 rounded-full animate-pulse" />
                   Call active
                 </p>
+
+                <div className="mt-4">
+                  <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-2 uppercase tracking-widest">
+                    Adaptive mode
+                  </label>
+                  <select
+                    value={adaptiveMode}
+                    onChange={(e) => {
+                      const v = e.target.value as "off" | "auto" | "heuristic" | "ml";
+                      setAdaptiveMode(v);
+                    }}
+                    className="px-3 py-2 rounded-lg border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white font-semibold focus:outline-none"
+                  >
+                    <option value="off">Off</option>
+                    <option value="auto">Auto (recommended)</option>
+                    <option value="heuristic">Heuristic (local)</option>
+                    <option value="ml" disabled={!mlConfigured}>
+                      ML service
+                    </option>
+                  </select>
+
+                  {!mlConfigured && (
+                    <p className="mt-2 text-xs font-semibold text-slate-600 dark:text-slate-400">
+                      ML mode needs <span className="font-mono">VITE_ML_SERVICE_URL</span>.
+                    </p>
+                  )}
+                </div>
               </div>
               <button
                 type="button"
@@ -190,7 +238,71 @@ export const Home=({
               </div>
             </div>
 
-            
+            <div className="mb-8 bg-white dark:bg-slate-800 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700 p-6">
+              <div className="flex items-center justify-between gap-4">
+                <p className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest">
+                  Live adaptive stats
+                </p>
+                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                  {adaptiveSnapshot
+                    ? `updated ${Math.max(0, Math.round((Date.now() - adaptiveSnapshot.timestampMs) / 1000))}s ago`
+                    : "-"}
+                </p>
+              </div>
+
+              <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm font-medium text-slate-800 dark:text-slate-200">
+                <div>
+                  <span className="text-slate-500 dark:text-slate-400">mode:</span> {adaptiveMode}
+                  {adaptiveMode === "auto" ? (
+                    <>
+                      <span className="text-slate-500 dark:text-slate-400"> · using:</span> {adaptiveSnapshot?.providerUsed ?? "-"}
+                    </>
+                  ) : null}
+                </div>
+                <div>
+                  <span className="text-slate-500 dark:text-slate-400">policy:</span> {adaptiveSnapshot?.policyName ?? "-"}
+                </div>
+                <div>
+                  <span className="text-slate-500 dark:text-slate-400">importance (ROI):</span> {fmtNum(adaptiveSnapshot?.importanceScoreUsed, 2)}
+                </div>
+                <div>
+                  <span className="text-slate-500 dark:text-slate-400">send bitrate:</span> {fmtBps(adaptiveSnapshot?.stats?.sendBitrateBps)}
+                </div>
+                <div>
+                  <span className="text-slate-500 dark:text-slate-400">available bitrate:</span> {fmtBps(adaptiveSnapshot?.stats?.availableOutgoingBitrateBps)}
+                </div>
+                <div>
+                  <span className="text-slate-500 dark:text-slate-400">rtt:</span> {fmtNum(adaptiveSnapshot?.stats?.rttMs)} ms
+                </div>
+                <div>
+                  <span className="text-slate-500 dark:text-slate-400">loss:</span> {fmtNum(adaptiveSnapshot?.stats?.packetLossPct, 2)}%
+                </div>
+                <div>
+                  <span className="text-slate-500 dark:text-slate-400">fps:</span> {fmtNum(adaptiveSnapshot?.stats?.framesPerSecond, 1)}
+                </div>
+                <div>
+                  <span className="text-slate-500 dark:text-slate-400">dropped:</span> {fmtNum(adaptiveSnapshot?.stats?.framesDropped)}
+                </div>
+                <div className="sm:col-span-2">
+                  <span className="text-slate-500 dark:text-slate-400">hint:</span> maxBitrate {fmtBps(adaptiveSnapshot?.hint?.suggested_max_bitrate_bps)} · fps {fmtNum(adaptiveSnapshot?.hint?.suggested_fps, 0)} · scale {fmtNum(adaptiveSnapshot?.hint?.suggested_scale_down_by, 2)}
+                </div>
+                <div className="sm:col-span-2">
+                  <span className="text-slate-500 dark:text-slate-400">apply:</span>{" "}
+                  {adaptiveSnapshot?.applied?.attempted ? "attempted" : "idle"} · {adaptiveSnapshot?.applied?.ok ? "ok" : "error"}
+                  {adaptiveSnapshot?.applied?.error ? (
+                    <span className="ml-2 text-xs font-semibold text-red-600 dark:text-red-400">{adaptiveSnapshot.applied.error}</span>
+                  ) : null}
+                </div>
+              </div>
+
+              {!mlConfigured && (
+                <p className="mt-3 text-xs font-semibold text-slate-600 dark:text-slate-400">
+                  ML mode is disabled because <span className="font-mono">VITE_ML_SERVICE_URL</span> is not set.
+                  If you start with <span className="font-mono">./run_all.ps1</span>, it is set automatically.
+                </p>
+              )}
+            </div>
+
               <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700 p-6">
                 <p className="text-xs font-bold text-slate-600 dark:text-slate-400 mb-4 uppercase tracking-widest">
                   Share this room ID

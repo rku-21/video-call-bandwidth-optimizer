@@ -1,15 +1,47 @@
 services:
   - type: web
-    name: avc-web
+    name: adaptive-video-backend
     runtime: node
-    # Deploy everything as a single web service (backend serves frontend/dist)
-    buildCommand: >
-      cd backendTs && npm ci --include=dev && npm run build && cd .. &&
-      cd frontend && npm ci --include=dev && npm run build
-    startCommand: node backendTs/dist/index.js
+    plan: free
+    rootDir: backendTs
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
     healthCheckPath: /healthz
     envVars:
       - key: NODE_ENV
         value: production
-      - key: NPM_CONFIG_PRODUCTION
-        value: "false"
+
+  - type: web
+    name: adaptive-video-ml
+    runtime: python
+    plan: free
+    rootDir: .
+    buildCommand: python -m pip install -r ml_service/requirements.txt && python ml_service/scripts/generate_seed_telemetry.py && python ml_service/scripts/train_webrtc_model.py
+    startCommand: python -m uvicorn ml_service.server:app --app-dir ml_service/src --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: ML_SERVICE_CORS_ALLOW_ORIGINS
+        value: "*"
+
+  - type: web
+    name: adaptive-video-frontend
+    runtime: node
+    plan: free
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    startCommand: npm run preview -- --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: VITE_SOCKET_URL
+        fromService:
+          name: adaptive-video-backend
+          type: web
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: VITE_ML_SERVICE_URL
+        fromService:
+          name: adaptive-video-ml
+          type: web
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: VITE_ADAPTIVE_CALLING
+        value: "1"
+      - key: VITE_ML_TELEMETRY
+        value: "1"

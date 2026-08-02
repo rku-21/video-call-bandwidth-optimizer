@@ -9,6 +9,8 @@ export function useVideoElements() {
     const remoteStreamRef = useRef<MediaStream | null>(null);
     const peerRef = useRef<RTCPeerConnection | null>(null);
 
+    const getPeerConnection = useCallback(() => peerRef.current, []);
+
     const attachLocalStream = useCallback(() => {
         const el = localVideoRef.current;
         const stream = localStreamRef.current;
@@ -203,6 +205,7 @@ export function useVideoElements() {
         ensureLocalMedia,
         attachLocalStream,
         attachRemoteStream,
+        getPeerConnection,
         startCallOffer,
         handleOffer,
         handleAnswer,
