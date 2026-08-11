@@ -1,103 +1,70 @@
 # Adaptive Video Compression
 
-Adaptive Video Compression is a real-time WebRTC video calling project that adds live, ML-assisted adaptation on top of a normal two-person call. The app monitors WebRTC network stats, chooses an encoding strategy, and updates video sender parameters in real time so the call can react to changing bandwidth, latency, and packet loss.
+<p align="center">
+  <img src="assets/logo.svg" alt="Adaptive Video Compression Logo" width="640" />
+</p>
 
-The project is built as three connected services:
+<p align="center">
+  <img src="https://img.shields.io/badge/TypeScript-5.x-blue" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/React-19.x-61DAFB" alt="React" />
+  <img src="https://img.shields.io/badge/WebRTC-Real%20Time-4B9CD3" alt="WebRTC" />
+  <img src="https://img.shields.io/badge/Python-FastAPI-3776AB" alt="Python" />
+  <img src="https://img.shields.io/badge/License-MIT-green" alt="License" />
+</p>
 
-- `frontend/` - React + Vite UI, WebRTC peer connection, live stats panel, and adaptive controller
-- `backendTs/` - Node.js + Express + Socket.IO signaling server for room setup and ICE/SDP exchange
-- `ml_service/` - FastAPI service that recommends bitrate, FPS, and scaling hints and stores telemetry for training
+Adaptive Video Compression is a full-stack real-time communication system that improves WebRTC call quality by adapting video encoding parameters dynamically based on live network conditions. The project focuses on making video streaming more stable, responsive, and intelligent under fluctuating bandwidth, latency, and packet loss.
 
-## What I built
+## Project Overview
 
-This project is more than a basic video call. It includes:
+This project was built to explore how real-time video calls can become more resilient through adaptive control. Instead of transmitting video at a fixed quality level, the system continuously monitors connection health and adjusts bitrate, frame rate, and resolution to maintain a better user experience during active calls.
 
-- Room-based WebRTC calling with create/join/leave flow
-- Socket.IO signaling for offer, answer, and ICE candidates
-- Local camera and microphone streaming
-- Real-time adaptive video control using `RTCRtpSender.setParameters()`
-- Live on-screen metrics such as send bitrate, available bitrate, RTT, packet loss, FPS, and dropped frames
-- Three adaptation modes:
-  - Off
-  - Auto
-  - Heuristic
-  - ML service
-- A Python ML service that can recommend encoding settings
-- Telemetry logging and a simple training pipeline for the ML model
+## What I Built
 
-## How it works
+- A real-time WebRTC-based video calling application with room creation, joining, and peer negotiation
+- A live adaptive control loop that reads WebRTC statistics and applies sender-side video adjustments in real time
+- A heuristic-based policy engine for adapting stream settings under changing network conditions
+- An ML-assisted recommendation service that suggests better encoding parameters for the current connection state
+- A monitoring dashboard that visualizes send bitrate, available bandwidth, RTT, packet loss, FPS, and dropped frames
+- A backend signaling layer using Node.js and Socket.IO for session setup and media negotiation
 
-### 1. Call setup
-- One user creates a room.
-- Another user joins with the same room ID.
-- The signaling server relays WebRTC negotiation messages.
-- After negotiation, audio and video flow peer-to-peer.
+## How It Works
 
-### 2. Adaptive loop
-- The frontend reads live WebRTC statistics every second.
-- It converts those stats into a snapshot of the current network state.
-- Based on the selected mode, it chooses either:
-  - a local heuristic policy, or
-  - a recommendation from the ML service
-- The chosen hint is applied to the outgoing video sender.
+1. A user creates or joins a call room.
+2. The frontend establishes a WebRTC peer connection and begins streaming media.
+3. Network statistics are collected continuously from the WebRTC connection.
+4. The system evaluates the current conditions and selects an adaptation policy.
+5. Recommended encoding adjustments are applied to improve video quality and stability.
 
-### 3. What the ML service does
-- The ML service receives WebRTC stats.
-- It returns an encoding hint containing:
-  - suggested maximum bitrate
-  - suggested FPS
-  - suggested resolution scale-down factor
-- If the trained model is available, it is used for prediction.
-- If not, the service falls back to the heuristic policy so the app still works.
+## Architecture
 
-### 4. What the numbers on screen mean
-- `send bitrate` = estimated outgoing bitrate from the WebRTC sender
-- `available bitrate` = estimated network capacity from the candidate pair
-- `rtt` = round-trip time in milliseconds
-- `loss` = packet loss percentage
-- `fps` = frames per second being encoded/sent
-- `dropped` = dropped or discarded video frames
-- `hint` = the adaptation values currently being recommended
-- `apply` = whether the sender settings were actually applied
-- `policy` = which policy produced the recommendation
-- `importance (ROI)` = the adaptive importance score used by the policy logic
+- Frontend: React, TypeScript, Vite, Zustand, WebRTC, Socket.IO Client
+- Backend: Node.js, Express, Socket.IO
+- ML Service: Python, FastAPI, scikit-learn, joblib, Pydantic
 
-## Project structure
+## Tech Stack
 
-- `frontend/src/App.tsx` wires the UI, call store, and adaptive controller together
-- `frontend/src/adaptive/controller.ts` runs the live adaptation loop
-- `frontend/src/adaptive/webrtcStats.ts` reads WebRTC stats from the peer connection
-- `frontend/src/adaptive/policy.ts` contains the local heuristic policy
-- `frontend/src/adaptive/mlClient.ts` calls the ML API
-- `frontend/src/pages/home.tsx` renders the video call UI and the live adaptive stats
-- `backendTs/src/` contains the Socket.IO signaling server
-- `ml_service/src/ml_service/` contains the FastAPI API, model loader, heuristic fallback, schemas, and telemetry logic
-- `ml_service/scripts/` contains the seed data generator and model training script
+<p align="left">
+  <img src="https://img.shields.io/badge/React-2025-61DAFB?logo=react&logoColor=white" alt="React" />
+  <img src="https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/Vite-5.x-646CFF?logo=vite&logoColor=white" alt="Vite" />
+  <img src="https://img.shields.io/badge/Node.js-Express-339933?logo=node.js&logoColor=white" alt="Node.js" />
+  <img src="https://img.shields.io/badge/Python-FastAPI-3776AB?logo=python&logoColor=white" alt="Python" />
+  <img src="https://img.shields.io/badge/scikit-learn-1.x-F7931E?logo=scikit-learn&logoColor=white" alt="scikit-learn" />
+</p>
 
-## Tech stack
+## Project Structure
 
-### Frontend
-- React
-- Vite
-- TypeScript
-- Zustand
-- Socket.IO client
-- WebRTC browser APIs
+- frontend/ - client-side UI, WebRTC handling, and adaptive controller
+- backendTs/ - signaling server for room setup and peer exchange
+- ml_service/ - inference API, telemetry pipeline, and model training workflow
 
-### Signaling server
-- Node.js
-- Express
-- Socket.IO
-- TypeScript
+## Key Highlights
 
-### ML service
-- Python
-- FastAPI
-- Pydantic
-- scikit-learn
-- joblib
-- Uvicorn
+- Adaptive video streaming under changing network conditions
+- Real-time monitoring and decision-making
+- Full-stack implementation combining frontend, backend, and ML components
+- Demonstrates practical integration of WebRTC, networking, and machine learning
 
-## In short
+## Impact
 
-This project demonstrates a real-time adaptive video calling system where the frontend measures network conditions, the ML service or heuristic policy recommends encoding changes, and the sender parameters are updated live during the call.
+This project highlights how intelligent, data-driven adaptation can improve the quality and reliability of real-time video communication in bandwidth-constrained environments.
